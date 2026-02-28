@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id          String       @id @default(cuid())
+  name        String
+  category    String?
+  width       Int          // 幅(cm)
+  height      Int          // 高さ(cm)
+  barcode     String?      @unique
+  allocations Allocation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Shelf {
+  id          String       @id @default(cuid())
+  name        String
+  row         Int          // 段数
+  column      Int          // 列数
+  cellWidth   Int          // セル幅(cm)
+  cellHeight  Int          // セル高さ(cm)
+  allocations Allocation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Allocation {
+  id        String   @id @default(cuid())
+  productId String
+  shelfId   String
+  row       Int      // 棚の段位置
+  column    Int      // 棚の列位置
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shelf     Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shelfId, row, column]) // 同じ位置に重複配置を防ぐ
+}
