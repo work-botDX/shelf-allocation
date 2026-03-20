@@ -53,14 +53,17 @@ export class BattleCalculator {
   }
 
   /**
-   * 追撃判定（速度差が4以上で追撃）
+   * 追撃判定（速度差が閾値以上で追撃）
+   * @param attacker 攻撃側
+   * @param defender 防御側
+   * @param threshold 速度差の閾値（デフォルト4、防御側の追撃は5）
    */
-  static canDoubleAttack(attacker: Unit, defender: Unit): boolean {
+  static canDoubleAttack(attacker: Unit, defender: Unit, threshold: number = 4): boolean {
     const atkWeapon = this.getWeapon(attacker);
     const defWeapon = this.getWeapon(defender);
     const atkSpeed = this.getEffectiveSpeed(attacker, atkWeapon);
     const defSpeed = this.getEffectiveSpeed(defender, defWeapon);
-    return atkSpeed - defSpeed >= 4;
+    return atkSpeed - defSpeed >= threshold;
   }
 
   /**
@@ -284,8 +287,9 @@ export class BattleCalculator {
       }
     }
 
-    // 防御側の追撃（反撃後）
-    if (combatDefender.canDouble && defenderHp > 0 && attackerHp > 0) {
+    // 防御側の追撃（速度差5以上で発動）
+    const defenderCanDouble = this.canDoubleAttack(defender, attacker, 5);
+    if (defenderCanDouble && defenderHp > 0 && attackerHp > 0) {
       const counter2 = this.processAttack(combatDefender, attackerHp, attacker.stats.maxHp);
       rounds.push(counter2);
       if (counter2.hit) {

@@ -2,3 +2,4 @@ export { useGameStore, selectPhase, selectTurn, selectCursorPosition, selectSele
 export { useUnitStore } from './unitStore';
 export { useMapStore, createEmptyMap } from './mapStore';
 export { useSettingsStore } from './settingsStore';
+export { useEventStore } from './eventStore';
