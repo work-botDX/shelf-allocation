@@ -6,7 +6,7 @@ interface ActionMenuProps {
   tileSize: number;         // タイルサイズ
   hasAttackableEnemies: boolean;  // 攻撃可能な敵がいるか
   hasSupportPartners: boolean;    // 支援相手がいるか
-  onMove: () => void;       // 移動選択時（キャンセル）
+  onCancel: () => void;     // キャンセル選択時（選択解除）
   onAttack: () => void;     // 攻撃選択時
   onSupport: () => void;    // 支援選択時
   onWait: () => void;       // 待機選択時（移動確定）
@@ -20,7 +20,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = memo(({
   tileSize,
   hasAttackableEnemies,
   hasSupportPartners,
-  onMove,
+  onCancel,
   onAttack,
   onSupport,
   onWait,
@@ -29,10 +29,10 @@ export const ActionMenu: React.FC<ActionMenuProps> = memo(({
   const pixelY = mapPosition.y * tileSize;
 
   const menuItems = [
-    { id: 'move', label: '移動', action: onMove, enabled: true },
     { id: 'attack', label: '攻撃', action: onAttack, enabled: hasAttackableEnemies },
     { id: 'support', label: '支援', action: onSupport, enabled: hasSupportPartners },
     { id: 'wait', label: '待機', action: onWait, enabled: true },
+    { id: 'cancel', label: 'キャンセル', action: onCancel, enabled: true },
   ];
 
   return (

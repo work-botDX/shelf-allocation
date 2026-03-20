@@ -6,7 +6,10 @@ interface UnitRendererProps {
   tileSize: number;
   isSelected?: boolean;
   hasMoved?: boolean;
+  isHovered?: boolean;
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 // 陣営ごとの色
@@ -18,13 +21,19 @@ const FACTION_COLORS: Record<Faction, { primary: string; secondary: string }> = 
 };
 
 export const UnitRenderer: React.FC<UnitRendererProps> = memo(
-  ({ unit, tileSize, isSelected, hasMoved, onClick }) => {
+  ({ unit, tileSize, isSelected, hasMoved, isHovered, onClick, onMouseEnter, onMouseLeave }) => {
     const colors = FACTION_COLORS[unit.faction];
     const x = unit.position.x * tileSize;
     const y = unit.position.y * tileSize;
 
     return (
-      <g transform={`translate(${x}, ${y})`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+      <g
+        transform={`translate(${x}, ${y})`}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={{ cursor: onClick ? 'pointer' : 'default' }}
+      >
         {/* ユニット本体 */}
         <rect
           x={tileSize * 0.15}
@@ -33,8 +42,9 @@ export const UnitRenderer: React.FC<UnitRendererProps> = memo(
           height={tileSize * 0.7}
           rx={4}
           fill={hasMoved ? '#6b7280' : colors.primary}
-          stroke={isSelected ? '#fbbf24' : colors.secondary}
-          strokeWidth={isSelected ? 3 : 2}
+          stroke={isSelected ? '#fbbf24' : isHovered ? '#fbbf24' : colors.secondary}
+          strokeWidth={isSelected ? 3 : isHovered ? 2.5 : 2}
+          opacity={isHovered && !isSelected ? 0.9 : 1}
         />
 
         {/* クラス略称 */}

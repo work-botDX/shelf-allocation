@@ -1,5 +1,3 @@
-import type { StatKey } from './growth';
-
 // 支援ランク
 export type SupportRank = 'C' | 'B' | 'A';
 

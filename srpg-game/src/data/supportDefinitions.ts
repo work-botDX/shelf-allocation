@@ -1,5 +1,4 @@
 import type { SupportDefinition, SupportRankBonus } from '../types/support';
-import type { StatKey } from '../types/growth';
 
 // 標準的なランクボーナス設定
 const C_RANK: SupportRankBonus = {

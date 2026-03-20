@@ -1,5 +1,5 @@
 import type { Unit, SupportBond } from '../../types';
-import type { SupportDefinition, SupportRankBonus, ActiveSupportBonus } from '../../types/support';
+import type { ActiveFormBonus } from '../../types/support';
 import { getGridSystem } from '../grid';
 import {
   getSupportDefinition,
@@ -58,7 +58,7 @@ export class SupportCalculator {
 
   /**
    * 戦闘時の支援ボーナスを計算
-   * 鑰となる支援パートナーからのボーナスを集計
+   * 隣接する支援パートナーからのボーナスを集計
    */
   static calculateSupportBonuses(unit: Unit, allUnits: Unit[]): ActiveFormBonus | null {
     const partners = this.getAdjacentSupportPartners(unit, allUnits)

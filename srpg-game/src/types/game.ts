@@ -68,12 +68,34 @@ export interface SaveData {
   timestamp: number;
   playTime: number;
   currentChapter: number;
-  gameState: Partial<GameState>;
-  units: Unit[];
-  inventory: unknown[];
-  gold: number;
+  version: string;  // セーブデータバージョン（例: "1.0.0"）
+  gameState: {
+    phase: GamePhase;
+    turn: number;
+    cursorPosition: Position;
+    cameraPosition: Position;
+    gameResult: GameResult | null;
+  };
+  units: Unit[];  // Map<string, Unit> を配列に変換して保存
+  unitIds: {
+    player: string[];
+    enemy: string[];
+    ally: string[];
+  };
+  currentMapId: string;  // マップはIDのみ保存、ロード時に再取得
   supportPoints: Record<string, Record<string, number>>;
   completedChapters: number[];
+}
+
+// スロットメタデータ（一覧表示用・軽量）
+export interface SaveSlotMeta {
+  slotNumber: number;  // 0-10（0はオートセーブ用）
+  exists: boolean;
+  timestamp: number;
+  playTime: number;
+  currentChapter: number;
+  playerUnitCount: number;
+  averageLevel: number;
 }
 
 // ゲーム設定

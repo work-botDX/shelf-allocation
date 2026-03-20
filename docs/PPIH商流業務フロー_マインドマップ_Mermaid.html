@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPIH商流業務フロー マインドマップ (Mermaid)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --blue: #4472C4;
+            --green: #70AD47;
+            --orange: #ED7D31;
+            --yellow: #FFC000;
+            --red: #C00000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'メイリオ', 'Meiryo', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header .meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .mindmap-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            overflow: auto;
+            max-width: 100%;
+        }
+
+        .mindmap-card h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .legend {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-top: 20px;
+        }
+
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--blue);
+        }
+
+        .instructions h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        /* 印刷用 */
+        @media print {
+            body { background: white; }
+            .mindmap-card { box-shadow: none; break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PPIH商流業務フロー マインドマップ</h1>
+        <div class="meta">バージョン: 1.0 | 作成日: 2026年3月19日 | 対象ツール: Microsoft Visio（M365版）</div>
+    </div>
+
+    <div class="container">
+        <div class="mindmap-card">
+            <h2>📊 マインドマップ</h2>
+            <pre class="mermaid">
+mindmap
+  root((PPIH商流業務フロー))
+    仕入れ元
+      メーカー
+      仕入れ先
+    初期接触
+      定期商談
+      問い合わせ
+    商品部_仕入れ担当
+      情報共有MTG_週1
+    事務作業
+      商品登録
+      ダイレクト掲載依頼
+      規定書作成
+      販促作成_社内
+      販促作成依頼_社外
+      クイックコネクト保存
+      施策リスト作成
+    会議・共有
+      取り組み商品共有MTG_月1
+      PPIH営業会議施策共有_月1
+        議事録配信
+        施策販促準備_浦和事務所
+    取り組み開始
+      在庫有無確認
+      販促在庫有無確認
+      マスタ登録確認
+      Nランク在庫チェック_発注
+      ランク変更
+    3ヶ月後ジャッジ
+      拡販
+      保留
+      撤退
+        現状の売価で売り切る
+        仕入れ値5%で処分特価に値下げ
+          特価商品_処分リストに追加
+            </pre>
+        </div>
+
+        <div class="mindmap-card">
+            <h2>📋 フローチャート形式</h2>
+            <pre class="mermaid">
+flowchart TB
+    subgraph SOURCES["📦 仕入れ元"]
+        M["メーカー"]
+        S["仕入れ先"]
+    end
+
+    subgraph CONTACT["🤝 初期接触"]
+        R["定期商談"]
+        I["問い合わせ"]
+    end
+
+    subGRAPH DEPT["🏢 商品部（仕入れ担当）"]
+        MTG["情報共有MTG（週1）"]
+    end
+
+    subgraph ADMIN["📝 事務作業"]
+        A1["商品登録"]
+        A2["ダイレクト掲載依頼"]
+        A3["規定書作成"]
+        A4["販促作成（社内）"]
+        A5["販促作成依頼（社外）"]
+        A6["クイックコネクト保存"]
+        A7["施策リスト作成"]
+    end
+
+    subgraph MEETING["👥 会議・共有"]
+        M1["取り組み商品共有MTG（月1）"]
+        M2["PPIH営業会議施策共有（月1）"]
+        M2_1["議事録配信"]
+        M2_2["施策販促準備（浦和事務所）"]
+    end
+
+    subgraph START["🚀 取り組み開始"]
+        S1["在庫有無確認"]
+        S2["販促在庫有無確認"]
+        S3["マスタ登録確認"]
+        S4["Nランク在庫チェック、発注"]
+        S5["ランク変更"]
+    end
+
+    subgraph JUDGE["⚖️ 3ヶ月後ジャッジ"]
+        J1["拡販"]
+        J2["保留"]
+        J3["撤退"]
+        J3_1["現状の売価で売り切る"]
+        J3_2["仕入れ値5%で処分特価に値下げ"]
+        J3_2_1["特価商品・処分リストに追加"]
+    end
+
+    SOURCES --> CONTACT
+    CONTACT --> DEPT
+    DEPT --> ADMIN
+    ADMIN --> MEETING
+    MEETING --> START
+    START --> JUDGE
+
+    M2 --> M2_1
+    M2 --> M2_2
+    J3 --> J3_1
+    J3 --> J3_2
+    J3_2 --> J3_2_1
+
+    style SOURCES fill:#4472C4,color:#fff
+    style CONTACT fill:#4472C4,color:#fff
+    style DEPT fill:#70AD47,color:#fff
+    style ADMIN fill:#70AD47,color:#fff
+    style MEETING fill:#ED7D31,color:#fff
+    style START fill:#FFC000,color:#333
+    style JUDGE fill:#C00000,color:#fff
+            </pre>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3>🎨 色分け凡例</h3>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--blue);"></div>
+                <span>仕入れ元・初期接触</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--green);"></div>
+                <span>商品部・事務作業</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--orange);"></div>
+                <span>会議・共有</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--yellow);"></div>
+                <span>取り組み開始</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--red);"></div>
+                <span>ジャッジ・撤退</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>📌 M365での利用方法</h3>
+        <ul>
+            <li><strong>SharePoint:</strong> このHTMLファイルをSharePointドキュメントライブラリにアップロード → クリックでブラウザ表示</li>
+            <li><strong>OneDrive:</strong> OneDriveに保存 → 共有リンクで配布可能</li>
+            <li><strong>Teams:</strong> Teamsのファイルタブに追加 → タブとして固定可能</li>
+            <li><strong>印刷:</strong> Ctrl+P（Mac: Cmd+P）でPDF出力可能</li>
+            <li><strong>Visio作成:</strong> このマインドマップを参考にVisioで正式版を作成</li>
+        </ul>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            mindmap: {
+                padding: 15,
+                useMaxWidth: true
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

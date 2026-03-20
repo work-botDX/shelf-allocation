@@ -1,8 +1,15 @@
 import { useEffect } from 'react';
 import { MapRenderer } from './components/game/MapRenderer';
-import { PhaseIndicator } from './components/ui/PhaseIndicator';
-import { TurnEndButton } from './components/ui/TurnEndButton';
-import { GameResultModal } from './components/ui/GameResultModal';
+import {
+  PhaseIndicator,
+  TurnEndButton,
+  GameResultModal,
+  MainMenu,
+  PauseMenu,
+  UnitStatusPanel,
+  TerrainInfoPanel,
+  TutorialOverlay,
+} from './components/ui';
 import { LevelUpModal } from './components/ui/LevelUpModal';
 import { SupportConversationModal, SupportRankUpModal } from './components/ui/SupportConversationModal';
 import { useGameStore, useMapStore, useUnitStore } from './store';
@@ -294,12 +301,16 @@ function createDemoUnits(): Unit[] {
 }
 
 function App() {
-  const { loadMap } = useMapStore();
-  const { addUnit, initializeSupports } = useUnitStore();
-  const { setPhase, moveCursor } = useGameStore();
+  const { loadMap, clearMap } = useMapStore();
+  const { addUnit, initializeSupports, clearUnits } = useUnitStore();
+  const { setPhase, moveCursor, gameState } = useGameStore();
 
-  // ゲーム初期化
+  // ゲーム初期化（初回のみ実行）
   useEffect(() => {
+    // 既存のデータをクリア
+    clearUnits();
+    clearMap();
+
     // デモマップをロード
     const demoMap = createDemoMap();
     loadMap(demoMap);
@@ -323,13 +334,19 @@ function App() {
 
     // カーソル初期位置
     moveCursor({ x: 1, y: 4 });
-  }, [loadMap, addUnit, initializeSupports, setPhase, moveCursor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 初回のみ実行
+
+  // タイトル画面表示中
+  if (gameState === 'title') {
+    return <MainMenu />;
+  }
 
   return (
     <div className="w-full h-screen bg-gray-900 flex flex-col">
       {/* ヘッダー */}
       <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">戦略SRPG - Phase 7</h1>
+        <h1 className="text-xl font-bold">戦略SRPG - Phase 8</h1>
         <PhaseIndicator />
       </header>
 
@@ -345,10 +362,16 @@ function App() {
       {/* 支援ランクアップモーダル（Phase 7追加） */}
       <SupportRankUpModal />
 
+      {/* ポーズメニュー（Phase 8追加） */}
+      <PauseMenu />
+
+      {/* チュートリアル（Phase 8追加） */}
+      <TutorialOverlay />
+
       {/* メインゲームエリア */}
       <main className="flex-1 flex relative">
         {/* マップエリア */}
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
           <MapRenderer tileSize={48} />
         </div>
 
@@ -357,55 +380,54 @@ function App() {
           <TurnEndButton />
         </div>
 
-        {/* サイドパネル */}
-        <aside className="w-64 bg-gray-800 p-4 text-white">
-          <h2 className="text-lg font-bold mb-4">操作方法</h2>
-          <ul className="text-sm space-y-2 text-gray-300">
-            <li>• クリック: タイル選択</li>
-            <li>• ユニットクリック: 選択</li>
-          </ul>
-
-          <h2 className="text-lg font-bold mt-6 mb-4">凡例</h2>
-          <div className="text-sm space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span>プレイヤー</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span>敵</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500/40 rounded"></div>
-              <span>移動可能</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500/50 rounded"></div>
-              <span>攻撃可能</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-500/50 rounded"></div>
-              <span>行動済み</span>
-            </div>
+        {/* サイドパネル（Phase 8: 再構成） */}
+        <aside className="w-72 bg-gray-800 p-4 text-white overflow-y-auto">
+          {/* ユニットステータス */}
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-gray-400 mb-2">ユニット情報</h2>
+            <UnitStatusPanel />
           </div>
 
-          <h2 className="text-lg font-bold mt-6 mb-4">地形</h2>
-          <div className="text-sm space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#4a7c59' }}></div>
-              <span>平地</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#2d5a27' }}></div>
-              <span>森</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#3b82f6' }}></div>
-              <span>水</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#92400e' }}></div>
-              <span>砦</span>
+          {/* 地形情報 */}
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-gray-400 mb-2">地形情報</h2>
+            <TerrainInfoPanel />
+          </div>
+
+          {/* 操作方法 */}
+          <div className="mb-4">
+            <h2 className="text-sm font-bold text-gray-400 mb-2">操作方法</h2>
+            <ul className="text-xs space-y-1 text-gray-400">
+              <li>• クリック: タイル選択</li>
+              <li>• ユニットクリック: 選択</li>
+              <li>• ESC: ポーズ</li>
+            </ul>
+          </div>
+
+          {/* 凡例 */}
+          <div>
+            <h2 className="text-sm font-bold text-gray-400 mb-2">凡例</h2>
+            <div className="text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                <span className="text-gray-300">プレイヤー</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <span className="text-gray-300">敵</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500/40 rounded"></div>
+                <span className="text-gray-300">移動可能</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500/50 rounded"></div>
+                <span className="text-gray-300">攻撃可能</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-gray-500/50 rounded"></div>
+                <span className="text-gray-300">行動済み</span>
+              </div>
             </div>
           </div>
         </aside>

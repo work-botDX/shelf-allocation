@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Position, GamePhase, SelectedAction, Unit, InteractionPhase } from '../types';
 import type { BattlePreviewData } from '../types/combat';
-import type { GameResult } from '../types/game';
+import type { GameResult, SaveSlotMeta } from '../types/game';
 import type { LevelUpResult } from '../types/growth';
 import type { SupportConversation } from '../types/support';
 import { useUnitStore } from './unitStore';
@@ -13,6 +13,10 @@ import { PhaseManager } from '../core/PhaseManager';
 import { AIController } from '../engine/ai';
 import { SupportCalculator } from '../engine/support';
 import { getSupportConversation } from '../data/supportConversations';
+import { saveManager } from '../engine/storage';
+
+// ゲーム状態（Phase 8追加）
+export type GameState = 'title' | 'playing' | 'paused';
 
 interface GameStore {
   // 状態
@@ -23,6 +27,18 @@ interface GameStore {
   cameraPosition: Position;
   isPaused: boolean;
   gameSpeed: number;
+
+  // Phase 8追加: ゲーム状態・ホバー
+  gameState: GameState;
+  hoveredUnitId: string | null;
+
+  // Phase 9追加: セーブ/ロード
+  saveSlotMetas: SaveSlotMeta[];
+  isSaving: boolean;
+  isLoading: boolean;
+  lastSaveTime: number | null;
+  playTime: number;
+  saveError: string | null;
 
   // フェーズ状態
   moveablePositions: Position[];
@@ -93,6 +109,18 @@ interface GameStore {
   dismissSupportConversation: () => void;
   showSupportRankUp: (unitName: string, partnerName: string, newRank: 'C' | 'B' | 'A') => void;
   dismissSupportRankUp: () => void;
+
+  // Phase 8追加: ゲーム状態・ホバーアクション
+  setGameState: (state: GameState) => void;
+  setHoveredUnit: (unitId: string | null) => void;
+  startGame: () => void;
+
+  // Phase 9追加: セーブ/ロードアクション
+  saveGame: (slotNumber: number) => Promise<{ success: boolean; error?: string }>;
+  loadGame: (slotNumber: number) => Promise<{ success: boolean; error?: string }>;
+  deleteSave: (slotNumber: number) => Promise<{ success: boolean; error?: string }>;
+  refreshSaveSlots: () => Promise<void>;
+  incrementPlayTime: () => void;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -106,6 +134,18 @@ export const useGameStore = create<GameStore>()(
       cameraPosition: { x: 0, y: 0 },
       isPaused: false,
       gameSpeed: 1,
+
+      // Phase 8追加: ゲーム状態・ホバー
+      gameState: 'title',
+      hoveredUnitId: null,
+
+      // Phase 9追加: セーブ/ロード
+      saveSlotMetas: [],
+      isSaving: false,
+      isLoading: false,
+      lastSaveTime: null,
+      playTime: 0,
+      saveError: null,
 
       moveablePositions: [],
       attackablePositions: [],
@@ -511,6 +551,9 @@ export const useGameStore = create<GameStore>()(
         const { resetAllMoved } = useUnitStore.getState();
         resetAllMoved('player');
 
+        // オートセーブ（スロット0）
+        saveManager.autoSave();
+
         // ゲーム終了チェック
         get().checkGameEnd();
       },
@@ -584,6 +627,96 @@ export const useGameStore = create<GameStore>()(
 
       dismissSupportRankUp: () => {
         set({ supportRankUpInfo: null });
+      },
+
+      // Phase 8追加アクション
+      setGameState: (state) => set({ gameState: state }),
+
+      setHoveredUnit: (unitId) => set({ hoveredUnitId: unitId }),
+
+      startGame: () => {
+        set({
+          gameState: 'playing',
+          phase: 'player_phase',
+          turn: 1,
+          selectedUnitId: null,
+          currentAction: null,
+          moveablePositions: [],
+          attackablePositions: [],
+          interactionPhase: 'idle',
+          pendingMovePosition: null,
+          attackableEnemies: [],
+          selectedTargetId: null,
+          battlePreviewData: null,
+          gameResult: 'playing',
+          isPhaseTransitioning: false,
+          levelUpQueue: [],
+          hoveredUnitId: null,
+        });
+
+        // ユニットとマップをリセット
+        const { resetAllMoved } = useUnitStore.getState();
+        resetAllMoved('player');
+        resetAllMoved('enemy');
+      },
+
+      // Phase 9追加: セーブ/ロードアクション
+      saveGame: async (slotNumber) => {
+        set({ isSaving: true, saveError: null });
+        const result = await saveManager.saveGame(slotNumber);
+        if (result.success) {
+          set({
+            isSaving: false,
+            lastSaveTime: Date.now(),
+            playTime: saveManager.getPlayTime(),
+          });
+          // スロット情報を更新
+          get().refreshSaveSlots();
+        } else {
+          set({ isSaving: false, saveError: result.error });
+        }
+        return result;
+      },
+
+      loadGame: async (slotNumber) => {
+        set({ isLoading: true, saveError: null });
+        const result = await saveManager.loadGame(slotNumber);
+        if (result.success) {
+          set({
+            isLoading: false,
+            gameState: 'playing',
+            playTime: saveManager.getPlayTime(),
+          });
+        } else {
+          set({ isLoading: false, saveError: result.error });
+        }
+        return result;
+      },
+
+      deleteSave: async (slotNumber) => {
+        set({ isSaving: true, saveError: null });
+        const result = await saveManager.deleteSave(slotNumber);
+        if (result.success) {
+          set({ isSaving: false });
+          // スロット情報を更新
+          get().refreshSaveSlots();
+        } else {
+          set({ isSaving: false, saveError: result.error });
+        }
+        return result;
+      },
+
+      refreshSaveSlots: async () => {
+        try {
+          const slots = await saveManager.getSaveSlotMetas();
+          set({ saveSlotMetas: slots });
+        } catch (error) {
+          console.error('Failed to refresh save slots:', error);
+        }
+      },
+
+      incrementPlayTime: () => {
+        set((state) => ({ playTime: state.playTime + 1 }));
       },
     }),
     { name: 'game-store' }

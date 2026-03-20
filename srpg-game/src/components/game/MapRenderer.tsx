@@ -5,6 +5,7 @@ import { UnitRenderer } from './UnitRenderer';
 import { ActionMenu } from './ActionMenu';
 import { BattlePreview } from './BattlePreview';
 import { SupportMenu } from '../ui/SupportMenu';
+import { UnitHoverCard } from '../ui/UnitHoverCard';
 import { initGridSystem, getGridSystem } from '../../engine/grid';
 
 interface MapRendererProps {
@@ -22,18 +23,19 @@ export const MapRenderer: React.FC<MapRendererProps> = ({ tileSize = 48 }) => {
     pendingMovePosition,
     attackableEnemies,
     battlePreviewData,
+    hoveredUnitId,
     moveCursor,
     selectUnit,
     setMoveablePositions,
     setInteractionPhase,
     showActionMenu,
-    hideActionMenu,
     confirmMove,
     startAttackMode,
     selectTarget,
     executeAttack,
     cancelAttack,
     cancelSelection,
+    setHoveredUnit,
   } = useGameStore();
   const { units, getUnitAt, getEnemyUnits } = useUnitStore();
 
@@ -278,9 +280,30 @@ export const MapRenderer: React.FC<MapRendererProps> = ({ tileSize = 48 }) => {
             tileSize={tileSize}
             isSelected={selectedUnitId === unit.id}
             hasMoved={unit.hasMoved}
+            isHovered={hoveredUnitId === unit.id}
             onClick={() => handleTileClick(unit.position.x, unit.position.y)}
+            onMouseEnter={() => setHoveredUnit(unit.id)}
+            onMouseLeave={() => setHoveredUnit(null)}
           />
         ))}
+
+        {/* ホバーカード */}
+        {hoveredUnitId && (() => {
+          const hoveredUnit = units.get(hoveredUnitId);
+          if (!hoveredUnit) return null;
+          return (
+            <UnitHoverCard
+              unit={hoveredUnit}
+              pixelPosition={{
+                x: hoveredUnit.position.x * tileSize,
+                y: hoveredUnit.position.y * tileSize,
+              }}
+              tileSize={tileSize}
+              mapWidth={mapWidth}
+              mapHeight={mapHeight}
+            />
+          );
+        })()}
 
         {/* 行動メニュー */}
         {interactionPhase === 'action_menu' && pendingMovePosition && (
@@ -289,7 +312,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({ tileSize = 48 }) => {
             tileSize={tileSize}
             hasAttackableEnemies={attackableEnemies.length > 0}
             hasSupportPartners={hasSupportPartners}
-            onMove={hideActionMenu}
+            onCancel={cancelSelection}
             onAttack={startAttackMode}
             onSupport={handleOpenSupportMenu}
             onWait={confirmMove}
