@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { MapRenderer } from './components/game/MapRenderer';
 import {
   PhaseIndicator,
@@ -113,7 +113,7 @@ function createChapter1Units(): Unit[] {
 function App() {
   const { loadMap, clearMap } = useMapStore();
   const { addUnit, initializeSupports, clearUnits } = useUnitStore();
-  const { setPhase, moveCursor, gameState, gameResult, setGameResult, startGame } = useGameStore();
+  const { setPhase, moveCursor, gameState, gameResult, setGameResult, startGame, phase } = useGameStore();
   const { tutorialCompleted } = useSettingsStore();
   const { startEvent, isEventActive, setCurrentChapter } = useEventStore();
 
@@ -162,12 +162,26 @@ function App() {
   useEffect(() => {
     if (gameState === 'playing' && chapterStarted && !isEventActive) {
       const evt = CHAPTER1_EVENTS.find(e => e.trigger === 'chapter_start');
-      if (evt) {
+      // 既に完了したイベントは開始しない
+      const isCompleted = useEventStore.getState().completedEvents.has(evt?.id || '');
+      if (evt && !isCompleted) {
         startEvent(evt);
         setPhase('event');
       }
     }
   }, [gameState, chapterStarted, isEventActive]);
+
+  // イベント完了時にプレイヤーフェーズに戻す
+  // isEventActiveがtrue→falseに変化したときのみ実行
+  const prevIsEventActive = useRef(isEventActive);
+
+  useEffect(() => {
+    // イベント完了時（true → false の変化）のみフェーズを戻す
+    if (prevIsEventActive.current && !isEventActive && phase === 'event') {
+      setPhase('player_phase');
+    }
+    prevIsEventActive.current = isEventActive;
+  }, [isEventActive, phase, setPhase]);
 
   // タイトル画面表示中
   if (gameState === 'title') {

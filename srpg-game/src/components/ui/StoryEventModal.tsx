@@ -1,10 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useEventStore, selectCurrentDialogue } from '../../store/eventStore';
-import type { DialogueLine } from '../../types/event';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEventStore } from '../../store/eventStore';
 
 /**
  * キャラクター定義（会話用）
- * TODO: 将来的にデータファイルに移動
  */
 const DIALOGUE_CHARACTERS: Record<string, { name: string; color: string }> = {
   allen: { name: 'アレン', color: 'text-blue-300' },
@@ -14,56 +12,76 @@ const DIALOGUE_CHARACTERS: Record<string, { name: string; color: string }> = {
 };
 
 /**
+ * 表情に応じた枠線スタイルを返す
+ */
+const getEmotionStyle = (emotion?: string): string => {
+  switch (emotion) {
+    case 'happy': return 'border-yellow-400';
+    case 'sad': return 'border-blue-400';
+    case 'angry': return 'border-red-400';
+    case 'surprised': return 'border-cyan-400';
+    case 'serious': return 'border-gray-400';
+    case 'pain': return 'border-red-500';
+    default: return 'border-slate-500';
+  }
+};
+
+/**
  * ストーリーイベントモーダル
- * Phase 10: コンテンツ作成
- * テキストベースの会話表示（名前＋セリフ）
  */
 export function StoryEventModal() {
-  const { activeEvent, isEventActive, advanceDialogue } = useEventStore();
-  const currentDialogue = useEventStore(selectCurrentDialogue);
+  const activeEvent = useEventStore((state) => state.activeEvent);
+  const isEventActive = useEventStore((state) => state.isEventActive);
+  const advanceDialogue = useEventStore((state) => state.advanceDialogue);
+  const currentDialogueIndex = useEventStore((state) => state.currentDialogueIndex);
 
+  // タイプライター効果用のstate
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // イベントがない場合は何も表示しない
-  if (!isEventActive || !activeEvent || !currentDialogue) {
-    return null;
-  }
-
-  const isLastLine = activeEvent.dialogue.indexOf(currentDialogue) >= activeEvent.dialogue.length - 1;
+  // currentDialogueを計算
+  const currentDialogue = activeEvent && activeEvent.dialogue[currentDialogueIndex];
 
   // タイプライター効果
   useEffect(() => {
+    if (!activeEvent) return;
+    const dialogue = activeEvent.dialogue[currentDialogueIndex];
+    if (!dialogue?.text) return;
+
     setDisplayedText('');
     setIsTyping(true);
 
     let charIndex = 0;
-    const text = currentDialogue.text;
+    const text = dialogue.text;
 
-    const intervalId = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (charIndex < text.length) {
         setDisplayedText(text.slice(0, charIndex + 1));
         charIndex++;
       } else {
         setIsTyping(false);
-        clearInterval(intervalId);
+        if (intervalRef.current) clearInterval(intervalRef.current);
       }
-    }, 25); // 25msごとに1文字表示
+    }, 35);
 
-    return () => clearInterval(intervalId);
-  }, [currentDialogue]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currentDialogueIndex, activeEvent?.id]);
 
   // クリック/キー入力で次へ
   const handleAdvance = useCallback(() => {
     if (isTyping) {
       // タイピング中なら全文表示
-      setDisplayedText(currentDialogue.text);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      const dialogue = activeEvent?.dialogue[currentDialogueIndex];
+      if (dialogue) setDisplayedText(dialogue.text);
       setIsTyping(false);
       return;
     }
-
     advanceDialogue();
-  }, [isTyping, currentDialogue, advanceDialogue]);
+  }, [isTyping, activeEvent, currentDialogueIndex, advanceDialogue]);
 
   // キー入力リスナー
   useEffect(() => {
@@ -78,54 +96,33 @@ export function StoryEventModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleAdvance]);
 
-  // 話者情報を取得
-  const getSpeakerInfo = (speakerId: string) => {
-    return DIALOGUE_CHARACTERS[speakerId] ?? { name: speakerId, color: 'text-white' };
-  };
+  // イベントがない場合は何も表示しない
+  if (!isEventActive || !activeEvent || !currentDialogue) {
+    return null;
+  }
 
-  // 表情に応じたスタイル
-  const getEmotionStyle = (emotion?: string): string => {
-    switch (emotion) {
-      case 'happy': return 'border-yellow-400';
-      case 'sad': return 'border-blue-400';
-      case 'angry': return 'border-red-400';
-      case 'surprised': return 'border-cyan-400';
-      case 'serious': return 'border-gray-400';
-      case 'pain': return 'border-red-500';
-      default: return 'border-slate-500';
-    }
-  };
-
-  const speakerInfo = getSpeakerInfo(currentDialogue.speakerId);
-  const currentIndex = activeEvent.dialogue.indexOf(currentDialogue);
+  const speakerInfo = DIALOGUE_CHARACTERS[currentDialogue.speakerId] || { name: currentDialogue.speakerId, color: 'text-white' };
+  const emotionStyle = getEmotionStyle(currentDialogue.emotion);
 
   return (
     <div
       className="fixed inset-0 flex items-end justify-center bg-black/70 z-50 cursor-pointer"
       onClick={handleAdvance}
     >
-      {/* 会話ウィンドウ */}
       <div className="w-full max-w-4xl mb-8 mx-4">
-        {/* タイトル */}
         {activeEvent.title && (
           <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 px-4 py-2 rounded-t-lg border-t-2 border-x-2 border-slate-500">
-            <h2 className="text-slate-200 font-bold text-lg">
-              {activeEvent.title}
-            </h2>
+            <h2 className="text-slate-200 font-bold text-lg">{activeEvent.title}</h2>
           </div>
         )}
 
-        {/* メイン会話エリア */}
-        <div className={`bg-gradient-to-b from-slate-900/95 to-slate-800/95 p-6 border-x-2 ${activeEvent.title ? '' : 'rounded-t-lg border-t-2'} ${getEmotionStyle(currentDialogue.emotion)} min-h-[180px] flex items-center`}>
+        <div className={`bg-gradient-to-b from-slate-900/95 to-slate-800/95 p-6 border-x-2 ${emotionStyle} min-h-[180px] flex items-center`}>
           <div className="w-full">
-            {/* 話者名 */}
             <div className="mb-3">
               <span className={`font-bold text-lg ${speakerInfo.color}`}>
                 {speakerInfo.name}
               </span>
             </div>
-
-            {/* セリフ */}
             <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-600 shadow-inner">
               <p className="text-white text-lg leading-relaxed whitespace-pre-wrap">
                 {displayedText}
@@ -137,13 +134,12 @@ export function StoryEventModal() {
           </div>
         </div>
 
-        {/* 操作ガイド */}
         <div className="bg-slate-900/90 px-4 py-3 rounded-b-lg border-b-2 border-x-2 border-slate-500 flex justify-between items-center">
           <p className="text-gray-400 text-sm">
             <span className="text-slate-300">Enter</span> / <span className="text-slate-300">Space</span> / <span className="text-slate-300">クリック</span> で次へ
           </p>
           <p className="text-gray-500 text-xs">
-            {currentIndex + 1} / {activeEvent.dialogue.length}
+            {currentDialogueIndex + 1} / {activeEvent.dialogue.length}
           </p>
         </div>
       </div>
@@ -153,7 +149,6 @@ export function StoryEventModal() {
 
 /**
  * 章開始イベント表示コンポーネント
- * 章タイトルを表示してからイベントを開始
  */
 export function ChapterStartOverlay({
   chapterNumber,
@@ -168,17 +163,8 @@ export function ChapterStartOverlay({
   const [showTitle, setShowTitle] = useState(false);
 
   useEffect(() => {
-    // フェードイン
-    const fadeInTimer = setTimeout(() => {
-      setShowTitle(true);
-    }, 300);
-
-    // フェードアウト
-    const fadeOutTimer = setTimeout(() => {
-      setShowTitle(false);
-    }, 2500);
-
-    // 完了
+    const fadeInTimer = setTimeout(() => setShowTitle(true), 300);
+    const fadeOutTimer = setTimeout(() => setShowTitle(false), 2500);
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
       onComplete();
@@ -195,15 +181,9 @@ export function ChapterStartOverlay({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
-      <div
-        className={`text-center transition-opacity duration-500 ${
-          showTitle ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
+      <div className={`text-center transition-opacity duration-500 ${showTitle ? 'opacity-100' : 'opacity-0'}`}>
         <p className="text-slate-400 text-lg mb-2">Chapter {chapterNumber}</p>
-        <h1 className="text-4xl font-bold text-white tracking-wider">
-          {chapterTitle}
-        </h1>
+        <h1 className="text-4xl font-bold text-white tracking-wider">{chapterTitle}</h1>
       </div>
     </div>
   );

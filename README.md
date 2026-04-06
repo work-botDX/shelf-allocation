@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## LINE remote control for Claude Code
+
+This repo now includes a LINE webhook at `/api/line/webhook` that can relay text commands to a Claude Code process over Tailscale SSH.
+
+Setup details:
+
+- [docs/line-tailscale-claude.md](/Users/yuukana/Git/shelf-allocation/docs/line-tailscale-claude.md)
+- [docs/cloudflare-tunnel-macos.md](/Users/yuukana/Git/shelf-allocation/docs/cloudflare-tunnel-macos.md)
+- [.env.example](/Users/yuukana/Git/shelf-allocation/.env.example)
+
 ## Getting Started
 
 First, run the development server:
